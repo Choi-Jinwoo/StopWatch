@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stop Watch</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
+            user-select: none;
+        }
+
+        @font-face {
+            font-family: 'Digital-7';
+            src: url('./digital-7.ttf') format('truetype');
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            background-color: #1d1f28;
+            color: #ff9500;
+        }
+
+        #changeUIModeWrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            width: 40px;
+            height: 40px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        #changeUIMode {
+            width: 20px;
+            height: 20px;
+        }
+
+        #changeUIMode:focus {
+            outline: none;
+        }
+
+        #timer {
+            margin-top: 200px;
+            font-family: 'Digital-7';
+            font-size: 200px;
+        }
+
+        #minute,
+        #second,
+        #millisecond {
+            display: inline-block;
+            width: 180px;
+            text-align: center;
+        }
+
+
+        #btnContainer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        #runTimer,
+        #resetTimer {
+            width: 100px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            height: 40px;
+            cursor: pointer;
+            background-color: #0E0F13;
+            color: #757578;
+        }
+
+        #runTimer:hover,
+        #resetTimer:hover {
+            background-color: #000000;
+        }
+
+        #runTimer:focus,
+        #resetTimer:focus {
+            outline: none;
+        }
+
+        #infoContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        #history {
+            width: 200px;
+            background-color: #2B2E3C;
+            border-radius: 3px;
+            margin-top: 30px;
+            color: #999999;
+            margin-bottom: 50px;
+        }
+
+        #history>p {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            text-align: center;
+            font-family: 'Digital-7';
+            font-size: 28px;
+        }
+
+        #resultBox {
+            display: flex;
+            width: 200px;
+            align-items: center;
+        }
+
+        .resultName {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            width: 80px;
+            text-align: center;
+            background-color: #0E0F13;
+            color: #757578;
+        }
+
+        #avg,
+        #max,
+        #min {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            width: 120px;
+            text-align: center;
+            background-color: #2B2E3C;
+            color: #999999;
+            font-family: 'Digital-7';
+            font-size: 28px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <div id="changeUIModeWrapper" onclick="changeUIMode()">
+            <img src="sun-icon.svg" id="changeUIMode" />
+        </div>
+        <div id="timer">
+            <span id="minute">
+                00
+            </span>
+            :
+            <span id="second">
+                00
+            </span>
+            .
+            <span id="millisecond">
+                00
+            </span>
+        </div>
+
+        <div id="btnContainer">
+            <button id="runTimer" onclick="btnRunTimerEvent()">시작</button>
+            <button id="resetTimer" onclick="btnResetTimerEvent()">재설정</button>
+        </div>
+
+        <div id="infoContainer">
+            <div id="result">
+                <div id="resultBox">
+                    <div class="resultName">평균</div>
+                    <div id="avg">00:00.00</div>
+                </div>
+                <div id="resultBox">
+                    <div class="resultName">최대</div>
+                    <div id="max">00:00.00</div>
+                </div>
+                <div id="resultBox">
+                    <div class="resultName">최소</div>
+                    <div id="min">00:00.00</div>
+                </div>
+            </div>
+
+            <div id="history">
+            </div>
+
+        </div>
+    </div>
+</body>
+
+<script>
+    const TimerStatusEnum = Object.freeze({
+        START: 0,
+        STOP: 1,
+    });
+
+    const UIModeEnum = Object.freeze({
+        LIGHT: 0,
+        DARK: 1,
+    })
+
+    const elColor = {
+        body: {
+            backgroundColor: {
+                light: '#ffffff',
+                dark: '#1d1f28',
+            }
+        },
+        changeUIModeWrapperEl: {
+            backgroundColor: {
+                light: '#e2e2e2',
+                dark: '#ffffff',
+            }
+        },
+        timerEl: {
+            color: {
+                light: '#555555',
+                dark: '#ff9500',
+            },
+        },
+        runTimerEl: {
+            backgroundColor: {
+                light: '#1263ce',
+                dark: '#0e0f13',
+            },
+            color: {
+                light: '#ffffff',
+                dark: '#757578',
+            },
+        },
+        resetTimerEl: {
+            backgroundColor: {
+                light: '#a210ce',
+                dark: '#0e0f13'
+            },
+            color: {
+                light: '#ffffff',
+                dark: '#757578',
+            },
+        },
+        resultNameEl: {
+            backgroundColor: {
+                light: '#1263ce',
+                dark: '#0e0f13',
+            },
+            color: {
+                light: '#ffffff',
+                dark: '#757578',
+            },
+        },
+        avgEl: {
+            backgroundColor: {
+                light: '#ffffff',
+                dark: '#2b2e3c',
+            },
+            color: {
+                light: '#555555',
+                dark: '#999999',
+            },
+        },
+        maxEl: {
+            backgroundColor: {
+                light: '#ffffff',
+                dark: '#2b2e3c',
+            },
+            color: {
+                light: '#555555',
+                dark: '#999999',
+            },
+        },
+        minEl: {
+            backgroundColor: {
+                light: '#ffffff',
+                dark: '#2b2e3c',
+            },
+            color: {
+                light: '#555555',
+                dark: '#999999',
+            },
+        },
+        historyEl: {
+            backgroundColor: {
+                light: '#ffffff',
+                dark: '#2b2e3c',
+            },
+            color: {
+                light: '#555555',
+                dark: '#999999',
+            },
+        }
+    }
+
+    let uiMode = UIModeEnum.DARK;
+
+    let minute = 0;
+    let second = 0;
+    let millisecond = 0;
+    let timerEvent = null
+    let timerStatus = TimerStatusEnum.STOP;
+    // 밀리세컨드 단위의 타이머 히스토리 배열
+    let timerMillisecondsHistory = [];
+
+    // S, R 버튼을 클릭 할 경우
+    window.onkeydown = (e) => {
+        if (e.code === 'KeyS') {
+            btnRunTimerEvent();
+        } else if (e.code === 'KeyR') {
+            btnResetTimerEvent();
+        }
+    }
+
+    const btnRunTimerEvent = () => {
+        if (timerStatus === TimerStatusEnum.STOP) {
+            timerStatus = TimerStatusEnum.START;
+            document.getElementById('runTimer').innerText = '중지';
+            document.getElementById('resetTimer').innerText = 'LAP';
+            startTimer();
+        }
+        else if (timerStatus === TimerStatusEnum.START) {
+            timerStatus = TimerStatusEnum.STOP;
+            document.getElementById('runTimer').innerText = '시작';
+            document.getElementById('resetTimer').innerText = '재설정';
+            stopTimer();
+
+            // 타이머 기록이 있을경우
+            if (timerMillisecondsHistory.length > 0) {
+                const { avg, max, min } = calcResult();
+                updateResultUI(avg, max, min);
+            }
+        }
+    }
+
+    const btnResetTimerEvent = () => {
+        if (timerStatus === TimerStatusEnum.STOP) {
+            resetTimer();
+        } else if (timerStatus === TimerStatusEnum.START) {
+            lapTimer();
+        }
+    }
+
+    const startTimer = () => {
+        timerEvent = setInterval(() => {
+            millisecond += 10;
+            if (millisecond >= 1000) {
+                second += 1;
+                millisecond = 0;
+            }
+
+            if (second >= 60) {
+                minute += 1;
+                second = 0;
+            }
+
+            updateTimerUI();
+        }, 10);
+    }
+
+    const stopTimer = () => {
+        clearInterval(timerEvent);
+        timerEvent = null;
+    }
+
+    const resetTimer = () => {
+        minute = 0;
+        second = 0;
+        millisecond = 0;
+
+        timerMillisecondsHistory = [];
+        clearLapUI();
+        updateTimerUI();
+        updateResultUI(0, 0, 0)
+    }
+
+    const lapTimer = () => {
+        const totalMilliseconds = ((minute * 60) + second) * 1000 + millisecond;
+        const historyEl = createHistoryEl(totalMilliseconds);
+        document.getElementById('history').appendChild(historyEl);
+        timerMillisecondsHistory.push(totalMilliseconds);
+    }
+
+    const calcResult = () => {
+        const avg = timerMillisecondsHistory
+            .reduce((sum, current) => sum += current) / timerMillisecondsHistory.length;
+
+        const max = timerMillisecondsHistory
+            .reduce((max, current) => max > current ? max : current);
+
+        const min = timerMillisecondsHistory
+            .reduce((min, current) => min < current ? min : current);
+
+        return {
+            avg,
+            max,
+            min,
+        };
+    }
+
+    const createResultEl = (name, milliseconds) => {
+        const formatValue = formatMillisecondsToStopWatchStr(milliseconds);
+        const resultEl = document.createElement('p');
+        resultEl.innerText = `${name} : ${formatValue}`;
+
+        return resultEl;
+    }
+
+    const clearLapUI = () => {
+        document.getElementById('history').innerHTML = null;
+    }
+
+    const createHistoryEl = (totalMilliseconds) => {
+        const pEl = document.createElement('p');
+        pEl.innerText = formatMillisecondsToStopWatchStr(totalMilliseconds);
+
+        return pEl;
+    }
+
+    const updateTimerUI = () => {
+        const minuteEl = document.getElementById('minute');
+        const secondEl = document.getElementById('second');
+        const millisecondEl = document.getElementById('millisecond');
+
+        minuteEl.innerText = zeroFill(minute)
+        secondEl.innerText = zeroFill(second)
+        millisecondEl.innerText = zeroFill(millisecond / 10);
+    }
+
+    const updateResultUI = (avg, max, min) => {
+        document.getElementById('avg').innerText = formatMillisecondsToStopWatchStr(avg);
+        document.getElementById('max').innerText = formatMillisecondsToStopWatchStr(max);
+        document.getElementById('min').innerText = formatMillisecondsToStopWatchStr(min);
+    }
+
+
+    const formatMillisecondsToStopWatchStr = (milliseconds) => {
+        const minute = Math.floor(milliseconds / 1000 / 60);
+        milliseconds -= Math.floor(minute * 1000 * 60);
+        const second = Math.floor(milliseconds / 1000);
+        const millisecond = milliseconds % 1000;
+
+        return `${zeroFill(minute)}:${zeroFill(second)}.${zeroFill(Math.floor(millisecond / 10))}`;
+    }
+
+    const zeroFill = (number) => {
+        return `${number}`.padStart(2, '0');
+    }
+
+    const changeUIMode = () => {
+        if (uiMode === UIModeEnum.DARK) {
+            uiMode = UIModeEnum.LIGHT;
+            document.getElementById('changeUIMode').setAttribute("src", "moon-icon.svg");
+            changeLightMode();
+        } else if (uiMode === UIModeEnum.LIGHT) {
+            uiMode = UIModeEnum.DARK;
+            document.getElementById('changeUIMode').setAttribute("src", "sun-icon.svg");
+            changeDarkMode();
+        }
+    }
+
+    const changeLightMode = () => {
+        document.getElementsByTagName('body')[0].style.backgroundColor = elColor.body.backgroundColor.light;
+        document.getElementById('timer').style.color = elColor.timerEl.color.light;
+        document.getElementById('changeUIModeWrapper').style.backgroundColor = elColor.changeUIModeWrapperEl.backgroundColor.light;
+
+        const runTimerEl = document.getElementById('runTimer');
+        runTimerEl.style.backgroundColor = elColor.runTimerEl.backgroundColor.light;
+        runTimerEl.style.color = elColor.runTimerEl.color.light;
+
+        const resetTimerEl = document.getElementById('resetTimer');
+        resetTimerEl.style.backgroundColor = elColor.resetTimerEl.backgroundColor.light;
+        resetTimerEl.style.color = elColor.resetTimerEl.color.light;
+
+        const resultNameElList = document.getElementsByClassName('resultName');
+        for (const el of resultNameElList) {
+            el.style.backgroundColor = elColor.resultNameEl.backgroundColor.light;
+            el.style.color = elColor.resultNameEl.color.light;
+        }
+
+        const avgEl = document.getElementById('avg');
+        const maxEl = document.getElementById('max');
+        const minEl = document.getElementById('min');
+
+        avgEl.style.backgroundColor = elColor.avgEl.backgroundColor.light;
+        avgEl.style.color = elColor.avgEl.color.light;
+        maxEl.style.backgroundColor = elColor.maxEl.backgroundColor.light;
+        maxEl.style.color = elColor.maxEl.color.light;
+        minEl.style.backgroundColor = elColor.minEl.backgroundColor.light;
+        minEl.style.color = elColor.minEl.color.light;
+
+        const historyEl = document.getElementById('history');
+        historyEl.style.backgroundColor = elColor.historyEl.backgroundColor.light;
+        historyEl.style.color = elColor.historyEl.color.light;
+    }
+
+    const changeDarkMode = () => {
+        document.getElementsByTagName('body')[0].style.backgroundColor = elColor.body.backgroundColor.dark;
+        document.getElementById('timer').style.color = elColor.timerEl.color.dark;
+        document.getElementById('changeUIModeWrapper').style.backgroundColor = elColor.changeUIModeWrapperEl.backgroundColor.dark;
+
+        const runTimerEl = document.getElementById('runTimer');
+        runTimerEl.style.backgroundColor = elColor.runTimerEl.backgroundColor.dark;
+        runTimerEl.style.color = elColor.runTimerEl.color.dark;
+
+        const resetTimerEl = document.getElementById('resetTimer');
+        resetTimerEl.style.backgroundColor = elColor.resetTimerEl.backgroundColor.dark;
+        resetTimerEl.style.color = elColor.resetTimerEl.color.dark;
+
+        const resultNameElList = document.getElementsByClassName('resultName');
+        for (const el of resultNameElList) {
+            el.style.backgroundColor = elColor.resultNameEl.backgroundColor.dark;
+            el.style.color = elColor.resultNameEl.color.dark;
+        }
+
+        const avgEl = document.getElementById('avg');
+        const maxEl = document.getElementById('max');
+        const minEl = document.getElementById('min');
+
+        avgEl.style.backgroundColor = elColor.avgEl.backgroundColor.dark;
+        avgEl.style.color = elColor.avgEl.color.dark;
+        maxEl.style.backgroundColor = elColor.maxEl.backgroundColor.dark;
+        maxEl.style.color = elColor.maxEl.color.dark;
+        minEl.style.backgroundColor = elColor.minEl.backgroundColor.dark;
+        minEl.style.color = elColor.minEl.color.dark;
+
+        const historyEl = document.getElementById('history');
+        historyEl.style.backgroundColor = elColor.historyEl.backgroundColor.dark;
+        historyEl.style.color = elColor.historyEl.color.dark;
+    }
+</script>
+
+</html>
